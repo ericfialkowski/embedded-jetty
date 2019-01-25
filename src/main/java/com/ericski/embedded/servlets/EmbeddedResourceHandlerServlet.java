@@ -1,5 +1,7 @@
 package com.ericski.embedded.servlets;
 
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.servlet.ServletException;
@@ -10,9 +12,20 @@ import javax.servlet.http.HttpServletResponse;
 
 public class EmbeddedResourceHandlerServlet extends HttpServlet
 {
+
+    private final Meter getRequestsMeter;
+    
+    public EmbeddedResourceHandlerServlet(MetricRegistry metrics)
+    {
+        getRequestsMeter = metrics.meter("requests");
+    }
+    
+    
+    
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response)   throws ServletException, IOException
     {
+        getRequestsMeter.mark();
         String pathInfo = "/www" + request.getPathInfo();
         
         InputStream resourceAsStream = getResourceFromPathInfo(pathInfo);
@@ -44,7 +57,7 @@ public class EmbeddedResourceHandlerServlet extends HttpServlet
      */
     protected InputStream getResourceFromPathInfo(String pathInfo)
     {
-        InputStream stream = null;
+        InputStream stream;
         if ( pathInfo.endsWith("/"))
         {
             stream = EmbeddedResourceHandlerServlet.class.getResourceAsStream(pathInfo + "index.html");
